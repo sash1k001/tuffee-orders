@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Shift {
+  id Int @id @default(autoincrement())
+  cashierId Int
+  status ShiftStatus @default(OPEN)
+
+  startingCash Decimal @db.Decimal(10, 2)
+  expectedCash Decimal? @db.Decimal(10, 2)
+  actualCash Decimal? @db.Decimal(10, 2)
+  discrepancy Decimal? @db.Decimal(10, 2)
+
+  openedAt DateTime @default(now())
+  closedAt DateTime?
+
+  orders Order[]
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+  shiftId Int 
+  userId Int?
+  cashierId Int
+  status OrderStatus @default(PENDING)
+  totalAmount Decimal @db.Decimal(10, 2)
+  paymentType PaymentType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shift Shift @relation(fields: [shiftId], references: [id])
+  items OrderItem[]
+}
+
+model OrderItem {
+  id Int @id @default(autoincrement())
+  orderId Int
+  productId Int
+  quantity Int @default(1)
+  price Decimal @db.Decimal(10, 2)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentType {
+  CASH
+  CARD
+}
