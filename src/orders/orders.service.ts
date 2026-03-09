@@ -135,4 +135,28 @@ export class OrdersService {
             order: cancelledOrder,
         };
     }
+
+    async completeOrder(orderId: number) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+        });
+
+        if (!order) {
+            throw new NotFoundException(`заказ с ID ${orderId} не найден`);
+        }
+
+        if (order.status !== 'PAID') {
+            throw new BadRequestException(`выдать можно только оплаченный заказ`);
+        }
+
+        const completedOrder = await this.prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'COMPLETED' },
+        });
+
+        return {
+            message: 'заказ готов и выдан клиенту',
+            order: completedOrder,
+        };
+    }
 }

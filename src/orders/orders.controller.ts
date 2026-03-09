@@ -21,4 +21,9 @@ export class OrdersController {
     async cancelOrder(@Payload() data: { orderId: number}) {
         return this.ordersService.cancelOrder(data.orderId);
     }
+
+    @MessagePattern({ cmd: 'orders.complete '})
+    async completeOrder(@Payload() data: { orderId: number }) {
+        return this.ordersService.completeOrder(data.orderId);
+    }
 }
