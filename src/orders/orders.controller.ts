@@ -11,4 +11,14 @@ export class OrdersController {
     async createOrder(@Payload() dto: CreateOrderDto) {
         return this.ordersService.createOrder(dto);
     }
+
+    @MessagePattern({ cmd: 'orders.pay' })
+    async payOrder(@Payload() data: { orderId: number }) {
+        return this.ordersService.payOrder(data.orderId);
+    }
+
+    @MessagePattern({ cmd: 'orders.cancel '})
+    async cancelOrder(@Payload() data: { orderId: number}) {
+        return this.ordersService.cancelOrder(data.orderId);
+    }
 }

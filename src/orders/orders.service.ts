@@ -9,6 +9,7 @@ export class OrdersService {
     constructor(
         private readonly prisma: PrismaService,
         @Inject('CATALOG_CLIENT') private readonly catalogClient: ClientProxy,
+        @Inject('INVENTORY_CLIENT') private readonly inventoryClient: ClientProxy,
     ) {}
 
     async createOrder(dto: CreateOrderDto) {
@@ -70,6 +71,68 @@ export class OrdersService {
         return {
             message: 'заказ успешно создан',
             order: newOrder,
+        };
+    }
+
+    async payOrder(orderId: number) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { items: true },
+        });
+
+        if (!order) {
+            throw new NotFoundException(`заказ с ID ${orderId} не найден`);
+        }
+
+        if (order.status !== 'PENDING') {
+            throw new BadRequestException(`оплатить можно только ожидающий заказ (pending)`);
+        }
+
+        const paidOrder = await this.prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'PAID' },
+        });
+
+        for (const item of order.items) {
+            try {
+                await firstValueFrom(
+                    this.inventoryClient.send(
+                        { cmd: 'recipes.sell' },
+                        { productId: item.productId, quantity: item.quantity, orderId: item.orderId },
+                    )
+                );
+            } catch (error) {
+                console.error(`ошибка списания со склада для товара ID ${item.productId}:`, error);
+            }
+        }
+
+        return {
+            message: 'заказ успешно оплачен. ингредиенты списаны со склада.',
+            order: paidOrder,
+        };
+    }
+
+    async cancelOrder(orderId: number) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+        });
+
+        if (!order) {
+            throw new NotFoundException(`заказ с ID ${orderId} не найден`);
+        }
+
+        if (order.status !== 'PENDING') {
+            throw new BadRequestException('отменить можно только неоплаченный заказ');
+        }
+
+        const cancelledOrder = await this.prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'CANCELLED' },
+        });
+
+        return {
+            message: 'заказ отменен. склад не затронут.',
+            order: cancelledOrder,
         };
     }
 }

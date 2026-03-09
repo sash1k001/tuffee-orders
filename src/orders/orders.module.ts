@@ -15,6 +15,14 @@ import { OrdersController } from "./orders.controller.js";
                     port: 3001,
                 },
             },
+            {
+                name: 'INVENTORY_CLIENT',
+                transport: Transport.TCP,
+                options: {
+                    host: '0.0.0.0',
+                    port: 3002,
+                },
+            },
         ]),
     ],
     controllers: [OrdersController],
