@@ -17,4 +17,9 @@ export class ShiftsController {
     async closeShift(@Payload() dto: CloseShiftDto) {
         return this.shiftsService.closeShift(dto);
     }
+
+    @MessagePattern({ cmd: 'shifts.findAll'})
+    async findAllShifts() {
+        return this.shiftsService.findAllShifts();
+    }
 }

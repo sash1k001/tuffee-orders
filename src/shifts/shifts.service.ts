@@ -72,4 +72,17 @@ export class ShiftsService {
             shift: closedShift,
         };
     }
+
+    async findAllShifts() {
+        const shifts = await this.prisma.shift.findMany({
+            orderBy: {
+                openedAt: 'desc',
+            },
+            include: {
+                orders: true,
+            },
+        });
+
+        return shifts;
+    }
 }
