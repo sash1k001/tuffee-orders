@@ -7,7 +7,7 @@ import { CreateOrderDto } from "./dto/create-order.dto.js";
 export class OrdersController {
     constructor(private readonly ordersService: OrdersService) {}
 
-    @MessagePattern({ cmd: 'orders.create'})
+    @MessagePattern({ cmd: 'orders.create' })
     async createOrder(@Payload() dto: CreateOrderDto) {
         return this.ordersService.createOrder(dto);
     }
@@ -17,13 +17,18 @@ export class OrdersController {
         return this.ordersService.payOrder(data.orderId);
     }
 
-    @MessagePattern({ cmd: 'orders.cancel '})
-    async cancelOrder(@Payload() data: { orderId: number}) {
+    @MessagePattern({ cmd: 'orders.cancel' })
+    async cancelOrder(@Payload() data: { orderId: number }) {
         return this.ordersService.cancelOrder(data.orderId);
     }
 
-    @MessagePattern({ cmd: 'orders.complete '})
+    @MessagePattern({ cmd: 'orders.complete' })
     async completeOrder(@Payload() data: { orderId: number }) {
         return this.ordersService.completeOrder(data.orderId);
+    }
+
+    @MessagePattern({ cmd: 'orders.find' })
+    async findOrderById(@Payload() data: { orderId: number }) {
+        return this.ordersService.findOrderById(data.orderId);
     }
 }

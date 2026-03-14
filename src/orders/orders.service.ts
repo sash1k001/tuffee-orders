@@ -159,4 +159,19 @@ export class OrdersService {
             order: completedOrder,
         };
     }
+
+    async findOrderById(orderId: number) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                items: true,
+            },
+        });
+
+        if (!order) {
+            throw new NotFoundException(`заказ с ID ${orderId} не найден`);
+        }
+
+        return order;
+    }
 }
