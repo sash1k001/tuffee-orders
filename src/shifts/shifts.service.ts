@@ -39,6 +39,21 @@ export class ShiftsService {
             throw new BadRequestException('нет открытой кассовой смены для закрытия');
         }
 
+        const pendingOrders = await this.prisma.order.findMany({
+            where: {
+                shiftId: activeShift.id,
+                status: 'PENDING',
+            },
+            select: {
+                id: true,
+            }
+        });
+
+        if (pendingOrders.length > 0) {
+            const pendingIds = pendingOrders.map((order) => order.id).join(', ');
+            throw new BadRequestException(`есть неоплаченные заказы (ID: ${pendingIds}), смена не может быть закрыта`)
+        }
+
         const cashOrdersSum = await this.prisma.order.aggregate({
             where: {
                 shiftId: activeShift.id,
@@ -51,9 +66,7 @@ export class ShiftsService {
         });
 
         const cashEarnings = cashOrdersSum._sum.totalAmount ? cashOrdersSum._sum.totalAmount.toNumber() : 0;
-
         const expectedCash = activeShift.startingCash.toNumber() + cashEarnings;
-
         const discrepamcy = dto.actualCash - expectedCash;
 
         const closedShift = await this.prisma.shift.update({
